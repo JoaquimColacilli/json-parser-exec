@@ -59,7 +59,7 @@ export function App() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-indigo-100 via-white to-emerald-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-emerald-100 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -70,11 +70,7 @@ export function App() {
           </p>
           <div className="flex justify-center items-center mt-4">
             <span className="text-gray-600 mr-2">by Joaquim Colacilli</span>
-            <a
-              href="https://github.com/JoaquimColacilli"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="https://github.com/JoaquimColacilli">
               <FaGithub className="text-gray-600 w-4 h-4" />
             </a>
           </div>
