@@ -1,7 +1,7 @@
 {
   "name": "json-parser-exec",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.0",
   "main": "src/electron.mjs",
   "description": "Aplicación para validar, formatear y guardar JSONs fácilmente",
   "author": "Joaquim Colacilli",
@@ -17,8 +17,8 @@
   },
   "repository": "https://github.com/JoaquimColacilli/json-parser-exec",
   "build": {
-    "appId": "com.parserjson.id",
-    "productName": "Parser de JSON",
+    "appId": "com.json-parser-exec.id",
+    "productName": "Parser-de-JSON",
     "directories": {
       "buildResources": "assets"
     },

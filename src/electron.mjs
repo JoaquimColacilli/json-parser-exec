@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import electronUpdater from 'electron-updater';
+
 const { autoUpdater } = electronUpdater;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,28 +47,114 @@ function createWindow() {
 }
 
 // Update events
-autoUpdater.on('checking-for-update', () => {
-  win?.webContents.send('update_checking');
+autoUpdater.on("download-progress", (info) =>{
+  win?.webContents.send("checkingUdp", "Installing...");
+  console.log("not", info);
+})
+
+autoUpdater.on("update-not-available", (info) => {
+  win?.webContents.send("checkingUdp", "");
+  console.log("not", info);
 });
 
-autoUpdater.on('update-available', (info) => {
-  win?.webContents.send('update_available', info);
+autoUpdater.on("error", (error) => {
+  win?.webContents.send("checkingUdp", error);
+  console.error("Error during update check:", error);
 });
 
-autoUpdater.on('update-not-available', (info) => {
-  win?.webContents.send('update_not_available', info);
+autoUpdater.on("update-available", (_event) => {
+  win?.webContents.send("checkingUdp", "Installing...");
+  const dialogOpts = {
+    type: 'info',
+    buttons: ['Ok'],
+    title: `Questify Update Available`,
+    message: `A new ${autoUpdater.channel} version download started.`,
+  };
+  if (!updateCheck) {
+    dialog.showMessageBox(dialogOpts);
+    updateCheck = true;
+    let pth = autoUpdater.downloadUpdate();
+    win?.webContents.send("checkingUdp", pth);
+  }
 });
 
-autoUpdater.on('error', (err) => {
-  win?.webContents.send('update_error', err);
+autoUpdater.on("update-downloaded", (_event) => {
+  if (!updateFound) {
+      updateFound = true;
+
+      setTimeout(() => {
+          autoUpdater.quitAndInstall(true,true);
+      }, 3500);
+  }
 });
 
-autoUpdater.on('download-progress', (progressObj) => {
-  win?.webContents.send('update_progress', progressObj);
-});
 
-autoUpdater.on('update-downloaded', (info) => {
-  win?.webContents.send('update_downloaded', info);
+app.whenReady().then( async() => {
+
+  autoUpdater.checkForUpdatesAndNotify();
+
+  win?.webContents.on("did-finish-load", async () => {
+    if (win) {
+      win?.webContents.send("checkingUdp", "Checking for updates");
+      
+      const tray = new Tray(nativeImage.createFromPath(iconPath));
+      tray.setImage(iconPath);
+
+      tray.setToolTip("Json Parser APP");
+      tray.on("double-click", () => {
+        win?.isVisible() ? win?.hide() : win?.show();
+      });
+
+      let config = readConfig();
+      win?.setAlwaysOnTop(config.keepOnTop, "screen-saver", 1);
+      const version = app.getVersion();
+
+      let template = [
+        { label: `Version: ${version}` },
+        { type: "separator" },
+        {
+          label: "System Tray",
+          type: "checkbox",
+          checked: config.keepTrayActive,
+          click: async () => {
+            config.keepTrayActive = !config.keepTrayActive;
+            fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+
+            template[2].checked = config.keepTrayActive;
+
+            const contextMenu = Menu.buildFromTemplate(template);
+            tray.setContextMenu(contextMenu);
+          },
+        },
+        {
+          label: "Always on top",
+          type: "checkbox",
+          checked: config.keepOnTop,
+          click: async () => {
+            config.keepOnTop = !config.keepOnTop;
+            fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+
+            template[3].checked = config.keepOnTop;
+
+            win?.setAlwaysOnTop(config.keepOnTop, "screen-saver", 1);
+            const contextMenu = Menu.buildFromTemplate(template);
+            tray.setContextMenu(contextMenu);
+          },
+        },
+        {
+          label: "Exit",
+          click: async () => {
+            win?.close();
+          },
+        },
+      ];
+
+      let contextMenu = Menu.buildFromTemplate(template);
+      tray.setContextMenu(contextMenu);
+    } else {
+      console.error("Window not yet created. Unable to send message.");
+    }
+  });
 });
 
 // IPC handlers

@@ -22,7 +22,6 @@ export function App() {
       setHistory(JSON.parse(savedHistory));
     }
 
-    // Modificación aquí: Manejar la Promise correctamente
     if (window.electronAPI && window.electronAPI.getAppVersion) {
       window.electronAPI.getAppVersion().then((version) => {
         setAppVersion(version);
