@@ -9,11 +9,9 @@ const __dirname = path.dirname(__filename);
 
 let win;
 
-// Configure autoUpdater
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
-// Log update events
 autoUpdater.logger = {
   info(message) { console.log('Update Info:', message); },
   error(message) { console.error('Update Error:', message); },
