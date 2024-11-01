@@ -1,7 +1,7 @@
 {
   "name": "json-parser-exec",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "src/electron.mjs",
   "description": "Aplicación para validar, formatear y guardar JSONs fácilmente",
   "author": "Joaquim Colacilli",
@@ -48,6 +48,8 @@
     "@headlessui/react": "^2.2.0",
     "@uiw/react-codemirror": "^4.23.6",
     "autoprefixer": "^10.4.20",
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.3.9",
     "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
