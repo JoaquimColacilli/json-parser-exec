@@ -1,8 +1,8 @@
 {
   "name": "json-parser-exec",
   "private": true,
-  "version": "1.0.1",
-  "main": "src/electron.mjs",
+  "version": "1.0.0",
+  "main": "src/electron.js",
   "description": "Aplicación para validar, formatear y guardar JSONs fácilmente",
   "author": "Joaquim Colacilli",
   "scripts": {
@@ -13,6 +13,7 @@
     "serve": "vite preview",
     "electron:dev": "cross-env NODE_ENV=development electron .",
     "electron:build": "npm run build && electron-builder",
+    "build:publish":"electron-builder --win --publish always",
     "start": "concurrently \"npm run dev\" \"npm run electron:dev\""
   },
   "repository": "https://github.com/JoaquimColacilli/json-parser-exec",
