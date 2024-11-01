@@ -9,9 +9,11 @@ const __dirname = path.dirname(__filename);
 
 let win;
 
+// Configure autoUpdater
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
+// Log update events
 autoUpdater.logger = {
   info(message) { console.log('Update Info:', message); },
   error(message) { console.error('Update Error:', message); },
@@ -45,6 +47,7 @@ function createWindow() {
   });
 }
 
+// Update events
 autoUpdater.on('checking-for-update', () => {
   win?.webContents.send('update_checking');
 });
@@ -69,6 +72,7 @@ autoUpdater.on('update-downloaded', (info) => {
   win?.webContents.send('update_downloaded', info);
 });
 
+// IPC handlers
 ipcMain.on('restart_app', () => {
   autoUpdater.quitAndInstall(false);
 });
@@ -87,6 +91,7 @@ ipcMain.handle('get-app-version', () => {
 app.whenReady().then(() => {
   createWindow();
   
+  // Check for updates after a small delay
   setTimeout(() => {
     if (app.isPackaged) {
       autoUpdater.checkForUpdates();
