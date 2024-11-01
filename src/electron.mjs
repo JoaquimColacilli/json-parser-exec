@@ -1,7 +1,7 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import electronUpdater from 'electron-updater'; 
+import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,12 +9,20 @@ const __dirname = path.dirname(__filename);
 
 let win;
 
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+
+autoUpdater.logger = {
+  info(message) { console.log('Update Info:', message); },
+  error(message) { console.error('Update Error:', message); },
+  warn(message) { console.warn('Update Warning:', message); }
+};
+
 function createWindow() {
   const isDev = process.env.NODE_ENV === 'development';
   win = new BrowserWindow({
     width: 1480,
     height: 1240,
-
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -31,32 +39,60 @@ function createWindow() {
 
   win.setMenuBarVisibility(false);
 
-  win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.error('Error al cargar la página:', errorDescription);
-  });
-
-  win.once('ready-to-show', () => {
-    autoUpdater.checkForUpdatesAndNotify();
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
   });
 }
 
-autoUpdater.on('update-available', () => {
-  win.webContents.send('update_available');
+autoUpdater.on('checking-for-update', () => {
+  win?.webContents.send('update_checking');
 });
 
-autoUpdater.on('update-downloaded', () => {
-  win.webContents.send('update_downloaded');
+autoUpdater.on('update-available', (info) => {
+  win?.webContents.send('update_available', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  win?.webContents.send('update_not_available', info);
+});
+
+autoUpdater.on('error', (err) => {
+  win?.webContents.send('update_error', err);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  win?.webContents.send('update_progress', progressObj);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  win?.webContents.send('update_downloaded', info);
 });
 
 ipcMain.on('restart_app', () => {
-  autoUpdater.quitAndInstall();
+  autoUpdater.quitAndInstall(false);
+});
+
+ipcMain.handle('check_for_updates', () => {
+  if (!app.isPackaged) {
+    return Promise.reject('App is not packaged');
+  }
+  return autoUpdater.checkForUpdates();
 });
 
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  
+  setTimeout(() => {
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdates();
+    }
+  }, 3000);
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
