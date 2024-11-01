@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useState, useEffect } from "react";
 import { Tab } from "@headlessui/react";
 import { JsonEditor } from "./components/JsonEditor";
@@ -12,11 +13,33 @@ export function App() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [parsedJson, setParsedJson] = useState(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {
     const savedHistory = localStorage.getItem("jsonHistory");
     if (savedHistory) {
       setHistory(JSON.parse(savedHistory));
+    }
+
+    // Modificación aquí: Manejar la Promise correctamente
+    if (window.electronAPI && window.electronAPI.getAppVersion) {
+      window.electronAPI.getAppVersion().then((version) => {
+        setAppVersion(version);
+      });
+    }
+
+    if (window.electronAPI) {
+      window.electronAPI.onUpdateAvailable(() => {
+        setSuccess("¡Nueva versión disponible! Se está descargando...");
+      });
+
+      window.electronAPI.onUpdateDownloaded(() => {
+        setSuccess(
+          "¡Actualización descargada! Reinicia la aplicación para instalarla."
+        );
+        setUpdateAvailable(true);
+      });
     }
   }, []);
 
@@ -45,6 +68,7 @@ export function App() {
     const updatedHistory = [...history, newEntry];
     setHistory(updatedHistory);
     localStorage.setItem("jsonHistory", JSON.stringify(updatedHistory));
+
     setError(null);
     setSuccess("JSON guardado exitosamente");
     setTimeout(() => setSuccess(null), 3000);
@@ -54,8 +78,15 @@ export function App() {
     const updatedHistory = history.filter((_, i) => i !== index);
     setHistory(updatedHistory);
     localStorage.setItem("jsonHistory", JSON.stringify(updatedHistory));
+
     setSuccess("JSON eliminado exitosamente");
     setTimeout(() => setSuccess(null), 3000);
+  };
+
+  const handleInstallUpdate = () => {
+    if (window.electronAPI) {
+      window.electronAPI.restartApp();
+    }
   };
 
   return (
@@ -63,17 +94,37 @@ export function App() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Parser de JSON
+            Parser de JSON{" "}
+            {appVersion && (
+              <span className="text-sm text-gray-600">v{appVersion}</span>
+            )}
           </h1>
           <p className="text-gray-600">
             Valida, formatea y guarda tus JSONs fácilmente
           </p>
           <div className="flex justify-center items-center mt-4">
             <span className="text-gray-600 mr-2">by Joaquim Colacilli</span>
-            <a href="https://github.com/JoaquimColacilli">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                window.electronAPI.openExternalLink(
+                  "https://github.com/JoaquimColacilli"
+                );
+              }}
+              className="hover:text-gray-800"
+            >
               <FaGithub className="text-gray-600 w-4 h-4" />
             </a>
           </div>
+          {updateAvailable && (
+            <button
+              onClick={handleInstallUpdate}
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Instalar actualización
+            </button>
+          )}
         </div>
 
         <Tab.Group>
