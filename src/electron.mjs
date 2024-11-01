@@ -1,4 +1,3 @@
-// src/electron.mjs
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
