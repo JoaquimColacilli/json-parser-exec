@@ -8,7 +8,7 @@ import { Alert } from "./components/Alert";
 import { FaGithub } from "react-icons/fa";
 
 export function App() {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState("{}");
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -17,9 +17,19 @@ export function App() {
   const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {
-    const savedHistory = localStorage.getItem("jsonHistory");
-    if (savedHistory) {
-      setHistory(JSON.parse(savedHistory));
+    // Cargar los JSONs desde los archivos
+    if (window.electronAPI && window.electronAPI.loadJSONs) {
+      window.electronAPI.loadJSONs().then((result) => {
+        if (result.success) {
+          // Ordenar por fecha descendente
+          const sortedHistory = result.jsons.sort(
+            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+          );
+          setHistory(sortedHistory);
+        } else {
+          setError("Error al cargar los JSONs: " + result.error);
+        }
+      });
     }
 
     if (window.electronAPI && window.electronAPI.getAppVersion) {
@@ -48,7 +58,7 @@ export function App() {
       setParsedJson(parsed);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      setError("Error al parsear el JSON: " + err.message);
       setParsedJson(null);
     }
   };
@@ -59,26 +69,48 @@ export function App() {
       return;
     }
 
-    const newEntry = {
-      timestamp: new Date().toISOString(),
-      data: parsedJson,
-    };
+    if (window.electronAPI && window.electronAPI.saveJSON) {
+      window.electronAPI.saveJSON(parsedJson).then((result) => {
+        if (result.success) {
+          // Agregar el nuevo JSON al historial
+          const newEntry = {
+            filename: result.filename,
+            data: parsedJson,
+            timestamp: new Date().toISOString(),
+          };
+          setHistory([newEntry, ...history]);
 
-    const updatedHistory = [...history, newEntry];
-    setHistory(updatedHistory);
-    localStorage.setItem("jsonHistory", JSON.stringify(updatedHistory));
-
-    setError(null);
-    setSuccess("JSON guardado exitosamente");
-    setTimeout(() => setSuccess(null), 3000);
+          setError(null);
+          setSuccess("JSON guardado exitosamente");
+          setTimeout(() => setSuccess(null), 3000);
+        } else {
+          setError("Error al guardar el JSON: " + result.error);
+        }
+      });
+    }
   };
 
-  const handleDelete = (index) => {
-    const updatedHistory = history.filter((_, i) => i !== index);
-    setHistory(updatedHistory);
-    localStorage.setItem("jsonHistory", JSON.stringify(updatedHistory));
+  const handleDelete = (filename) => {
+    if (window.electronAPI && window.electronAPI.deleteJSON) {
+      window.electronAPI.deleteJSON(filename).then((result) => {
+        if (result.success) {
+          // Remover el JSON del historial
+          const updatedHistory = history.filter(
+            (entry) => entry.filename !== filename
+          );
+          setHistory(updatedHistory);
 
-    setSuccess("JSON eliminado exitosamente");
+          setSuccess("JSON eliminado exitosamente");
+          setTimeout(() => setSuccess(null), 3000);
+        } else {
+          setError("Error al eliminar el JSON: " + result.error);
+        }
+      });
+    }
+  };
+
+  const handleCopy = () => {
+    setSuccess("JSON copiado al portapapeles");
     setTimeout(() => setSuccess(null), 3000);
   };
 
@@ -107,9 +139,11 @@ export function App() {
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                window.electronAPI.openExternalLink(
-                  "https://github.com/JoaquimColacilli"
-                );
+                if (window.electronAPI) {
+                  window.electronAPI.openExternalLink(
+                    "https://github.com/JoaquimColacilli"
+                  );
+                }
               }}
               className="hover:text-gray-800"
             >
@@ -168,10 +202,7 @@ export function App() {
               <div className="bg-white rounded-xl shadow-xl p-8">
                 <HistoryList
                   history={history}
-                  onCopy={() => {
-                    setSuccess("JSON copiado al portapapeles");
-                    setTimeout(() => setSuccess(null), 3000);
-                  }}
+                  onCopy={handleCopy}
                   onDelete={handleDelete}
                 />
               </div>

@@ -1,11 +1,11 @@
+// src/components/HistoryList.jsx
 import React, { useState } from "react";
 import { Modal } from "./Modal";
 
 export function HistoryList({ history, onCopy, onDelete }) {
-  const [selectedEntry, setSelectedEntry] = useState(null);
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
-    index: null,
+    filename: null,
   });
 
   if (history.length === 0) {
@@ -28,7 +28,7 @@ export function HistoryList({ history, onCopy, onDelete }) {
           No hay registros guardados
         </p>
         <p className="text-gray-400 text-sm">
-          Los JSONs guardados aparecerán aquí
+          Los JSONs guardados aparecerán acá
         </p>
       </div>
     );
@@ -38,14 +38,12 @@ export function HistoryList({ history, onCopy, onDelete }) {
     <div className="space-y-6">
       {history.map((entry, index) => (
         <div
-          key={index}
-          className={`border-2 rounded-xl p-6 transition-all duration-200 cursor-pointer
-            ${
-              selectedEntry === index
-                ? "border-indigo-500 bg-indigo-50 shadow-lg"
-                : "border-gray-200 hover:border-indigo-300 hover:shadow-md"
-            }`}
-          onClick={() => setSelectedEntry(index)}
+          key={entry.filename}
+          className="border-2 rounded-xl p-6 transition-all duration-200 cursor-pointer hover:border-indigo-300 hover:shadow-md"
+          onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(entry.data, null, 2));
+            onCopy();
+          }}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
@@ -56,38 +54,17 @@ export function HistoryList({ history, onCopy, onDelete }) {
                 {new Date(entry.timestamp).toLocaleString()}
               </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                className="px-3 py-1 text-sm text-white bg-gray-600 hover:bg-gray-700 rounded-md transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(
-                    JSON.stringify(entry.data, null, 2)
-                  );
-                  onCopy();
-                }}
-              >
-                Copiar
-              </button>
-              <button
-                className="px-3 py-1 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteModal({ isOpen: true, index });
-                }}
-              >
-                Eliminar
-              </button>
-            </div>
+            <button
+              className="px-3 py-1 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteModal({ isOpen: true, filename: entry.filename });
+              }}
+            >
+              Eliminar
+            </button>
           </div>
-          <pre
-            className={`bg-white p-4 rounded-lg overflow-auto max-h-60 transition-all duration-200
-            ${
-              selectedEntry === index
-                ? "border-2 border-indigo-200"
-                : "border border-gray-200"
-            }`}
-          >
+          <pre className="bg-white p-4 rounded-lg overflow-auto max-h-60 border border-gray-200">
             <code className="text-sm">
               {JSON.stringify(entry.data, null, 2)}
             </code>
@@ -97,12 +74,10 @@ export function HistoryList({ history, onCopy, onDelete }) {
 
       <Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, index: null })}
+        onClose={() => setDeleteModal({ isOpen: false, filename: null })}
         onConfirm={() => {
-          onDelete(deleteModal.index);
-          if (selectedEntry === deleteModal.index) {
-            setSelectedEntry(null);
-          }
+          onDelete(deleteModal.filename);
+          setDeleteModal({ isOpen: false, filename: null });
         }}
         title="Confirmar eliminación"
         message="¿Estás seguro de que deseas eliminar este JSON? Esta acción no se puede deshacer."
