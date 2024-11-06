@@ -76,7 +76,7 @@ autoUpdater.on("update-downloaded", () => {
   dialog.showMessageBox({
     type: 'info',
     title: 'Actualización lista',
-    message: 'Una nueva versión ha sido descargada. Reinicia la aplicación para aplicar los cambios.',
+    message: 'Una nueva versión ha sido descargada. Reinicia la aplicacion para aplicar los cambios.',
     buttons: ['Reiniciar', 'Después']
   }).then((result) => {
     if (result.response === 0) {

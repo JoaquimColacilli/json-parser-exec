@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.1.0",
   "main": "src/electron.js",
-  "description": "Aplicación para validar, formatear y guardar JSONs fácilmente",
+  "description": "Aplicacion para validar, formatear y guardar JSONs fácilmente",
   "author": "Joaquim Colacilli",
   "scripts": {
     "dev": "vite",
@@ -22,6 +22,9 @@
     "productName": "Parser-de-JSON",
     "directories": {
       "buildResources": "assets"
+    },
+    "nsis": {
+      "unicode": true
     },
     "asar": true,
     "files": [
