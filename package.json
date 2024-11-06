@@ -1,7 +1,7 @@
 {
   "name": "json-parser-exec",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "main": "src/electron.js",
   "description": "Aplicacion para validar, formatear y guardar JSONs fácilmente",
   "author": "Joaquim Colacilli",
